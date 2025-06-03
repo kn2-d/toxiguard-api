@@ -1,0 +1,13 @@
+# APIフレームワーク
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 環境変数
+python-dotenv==1.0.0
+
+# ログ
+loguru==0.7.2
+
+# 開発ツール
+pytest==7.4.3
+black==23.12.0
