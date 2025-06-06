@@ -11,3 +11,11 @@ loguru==0.7.2
 # 開発ツール
 pytest==7.4.3
 black==23.12.0
+
+# AI/ML追加パッケージ（Day 3-5用）
+anthropic>=0.25.0
+google-generativeai>=0.5.0
+transformers>=4.36.0
+torch>=2.2.0  # 2.2.0以上の利用可能なバージョン
+sentencepiece>=0.1.99
+protobuf>=4.25.0

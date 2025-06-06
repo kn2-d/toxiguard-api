@@ -1,0 +1,96 @@
+"""
+ToxiGuard API メインアプリケーション
+Version 1.0 - キーワードベース毒性検知
+"""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+import os
+from dotenv import load_dotenv
+from app.routers import analyze
+import logging
+
+# ログ設定（アプリケーションの動作記録）
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# 環境変数を読み込む（.envファイルから設定を読む）
+load_dotenv()
+
+# FastAPIアプリケーションのインスタンスを作成
+app = FastAPI(
+    title="ToxiGuard API",
+    description="日本語テキストの毒性を検知するAPI - Release 1",
+    version="1.0.0",
+    docs_url="/docs",      # Swagger UIのURL
+    redoc_url="/redoc"     # ReDocのURL
+)
+
+# CORS設定（他のドメインからのアクセスを許可）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],       # すべてのオリジンを許可（本番では制限する）
+    allow_credentials=True,
+    allow_methods=["*"],       # すべてのHTTPメソッドを許可
+    allow_headers=["*"],       # すべてのヘッダーを許可
+)
+
+# ルーターを追加（/api/v1/analyzeなどのエンドポイントを有効化）
+app.include_router(analyze.router)
+
+@app.get("/")
+async def root():
+    """
+    APIのルートエンドポイント
+    ブラウザでhttp://localhost:8000/にアクセスすると表示される
+    """
+    return {
+        "message": "Welcome to ToxiGuard API 🛡️",
+        "version": "1.0.0",
+        "release": "Release 1 - Keyword Based",
+        "endpoints": {
+            "/": "このメッセージ",
+            "/docs": "APIドキュメント（Swagger UI）",
+            "/api/v1/analyze": "テキスト毒性分析",
+            "/api/v1/analyze/health": "分析サービスの状態"
+        },
+        "accuracy": "40%",
+        "method": "Keyword matching",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/health")
+async def health_check():
+    """
+    システム全体のヘルスチェック
+    監視ツールなどから定期的に呼ばれることを想定
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "components": {
+            "api": "healthy",
+            "analyzer": "healthy"
+        }
+    }
+
+# このファイルが直接実行された場合
+if __name__ == "__main__":
+    import uvicorn
+    
+    # 環境変数から設定を読む（なければデフォルト値）
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    
+    # 起動メッセージを表示
+    print(f"""
+    🚀 ToxiGuard API Release 1 Starting...
+    📍 URL: http://localhost:{port}
+    📚 Docs: http://localhost:{port}/docs
+    🎯 Accuracy: 40% (Keyword-based)
+    """)
+    
+    # サーバーを起動
+    uvicorn.run(app, host=host, port=port, reload=True)
