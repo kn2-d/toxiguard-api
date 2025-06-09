@@ -45,3 +45,39 @@ htmlcov/
 # その他
 temp/
 tmp/
+# ==============================================
+# ToxiGuard API 特有の追加項目
+# ==============================================
+
+# 開発用テストファイル（正式テストは tests/ に配置）
+test_hello.py
+simple_test.py
+*_playground.py
+scratch.py
+
+# FastAPI関連
+uploads/
+static/temp/
+cache/
+
+# ToxiGuard API 特有
+debug/
+playground/
+experiments/
+
+# AI モデルキャッシュ（既存のmodels/に加えて）
+app/data/cache/
+app/models/cache/
+
+# 設定ファイルの環境別バリエーション
+.env.development
+.env.production
+.env.staging
+
+# 開発用ドキュメント（個人メモなど）
+notes/
+docs/drafts/
+
+# API テスト用ファイル
+*.http
+requests.rest
