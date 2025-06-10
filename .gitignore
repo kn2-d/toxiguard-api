@@ -80,4 +80,6 @@ docs/drafts/
 
 # API テスト用ファイル
 *.http
-requests.rest
+requests.restmodels/
+*.bin
+*.safetensors
