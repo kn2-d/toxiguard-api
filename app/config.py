@@ -1,0 +1,437 @@
+"""
+ToxiGuard API 設定管理
+Release 4: 外部API統合と商用化対応
+"""
+from typing import Dict, Any, Optional
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from dotenv import load_dotenv
+
+# .envファイルの読み込み
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
+
+
+@dataclass
+class ModelConfig:
+    """モデル設定データクラス"""
+    name: str                # モデル名
+    weight: float           # 統合時の重み
+    use_case: str          # 使用ケース
+    max_length: int        # 最大入力長
+    cache_size: int        # キャッシュサイズ
+    timeout: float         # タイムアウト（秒）
+    enabled: bool = True   # 有効/無効フラグ
+    cost_per_request: float = 0.0  # リクエストあたりのコスト（USD）
+
+
+# モデル別設定
+MODEL_CONFIGS = {
+    "keyword": ModelConfig(
+        name="keyword_analyzer",
+        weight=0.2,
+        use_case="fast_basic",
+        max_length=1000,
+        cache_size=200,
+        timeout=1.0,
+        enabled=True,
+        cost_per_request=0.0
+    ),
+    "toxic_bert": ModelConfig(
+        name="paraphrase-multilingual-MiniLM-L12-v2",
+        weight=0.3,
+        use_case="balanced",
+        max_length=512,
+        cache_size=150,
+        timeout=3.0,
+        enabled=True,
+        cost_per_request=0.0
+    ),
+    "mistral": ModelConfig(
+        name="microsoft/phi-2",  # Mistralの代替
+        weight=0.15,
+        use_case="deep_analysis",
+        max_length=512,
+        cache_size=50,
+        timeout=5.0,
+        enabled=True,
+        cost_per_request=0.0
+    ),
+    "claude": ModelConfig(
+        name="claude-3-haiku-20240307",
+        weight=0.2,
+        use_case="high_accuracy",
+        max_length=4096,
+        cache_size=100,
+        timeout=10.0,
+        enabled=bool(os.getenv("ANTHROPIC_API_KEY")),
+        cost_per_request=0.00025  # $0.25 per 1M tokens
+    ),
+    "openai": ModelConfig(
+        name="gpt-3.5-turbo",
+        weight=0.15,
+        use_case="comparison",
+        max_length=4096,
+        cache_size=100,
+        timeout=10.0,
+        enabled=bool(os.getenv("OPENAI_API_KEY")),
+        cost_per_request=0.0005  # $0.50 per 1M tokens
+    ),
+    "google": ModelConfig(
+        name="perspective-api",
+        weight=0.0,  # 単独使用想定
+        use_case="toxicity_specific",
+        max_length=3000,
+        cache_size=100,
+        timeout=5.0,
+        enabled=bool(os.getenv("GOOGLE_API_KEY")),
+        cost_per_request=0.0  # 無料枠あり
+    )
+}
+
+# Release 3からの継承設定
+HYBRID_CONFIG = {
+    "keyword_weight": 0.6,      # キーワード分析の重み
+    "ai_weight": 0.4,           # AI分析の重み
+    "boost_conditions": {
+        "keyword_threshold": 0.2,
+        "ai_threshold": 0.02,
+        "boost_factor": 1.2
+    },
+    "toxic_threshold": 0.3      # 毒性判定閾値
+}
+
+# パフォーマンス設定
+PERFORMANCE_CONFIG = {
+    "max_response_time": 3.0,   # 最大レスポンス時間（秒）
+    "memory_limit": 4096,       # メモリ制限（MB）
+    "max_concurrent": 20,       # 最大同時処理数
+    "error_threshold": 0.01,    # エラー率閾値（1%）
+    "batch_size": 4,           # バッチ処理サイズ
+    "use_gpu": False,          # GPU使用フラグ
+    "external_api_timeout": float(os.getenv("EXTERNAL_API_TIMEOUT", "10"))
+}
+
+# 毒性カテゴリと重み
+TOXICITY_CATEGORIES = {
+    "severe_toxicity": {
+        "weight": 1.0,
+        "keywords": ["死ね", "殺す", "自殺", "死んで"],
+        "description": "重度の毒性（生命に関わる脅威）"
+    },
+    "hate_speech": {
+        "weight": 0.8,
+        "keywords": ["きもい", "クズ", "ゴミ", "消えろ"],
+        "description": "ヘイトスピーチ"
+    },
+    "violence": {
+        "weight": 0.8,
+        "keywords": ["ぶっ殺", "暴力", "潰す", "破壊"],
+        "description": "暴力的表現"
+    },
+    "sexual_content": {
+        "weight": 0.7,
+        "keywords": ["エロ", "セックス", "レイプ"],
+        "description": "性的な内容"
+    },
+    "discrimination": {
+        "weight": 0.8,
+        "keywords": ["差別", "劣等", "障害者"],
+        "description": "差別的表現"
+    },
+    "mild_toxicity": {
+        "weight": 0.3,
+        "keywords": ["バカ", "アホ", "うざい", "むかつく"],
+        "description": "軽度の毒性"
+    }
+}
+
+# API設定
+API_CONFIG = {
+    "version": "v2",  # Release 4でv2に更新
+    "base_path": "/api/v2",
+    "rate_limit": {
+        "requests_per_minute": 60,
+        "requests_per_hour": 1000,
+        "burst_size": 10
+    },
+    "cors": {
+        "origins": ["*"],  # 本番環境では制限推奨
+        "methods": ["GET", "POST"],
+        "headers": ["*"]
+    }
+}
+
+# ログ設定
+LOGGING_CONFIG = {
+    "level": os.getenv("LOG_LEVEL", "INFO"),
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "toxiguard.log",
+    "max_bytes": 10 * 1024 * 1024,  # 10MB
+    "backup_count": 5
+}
+
+# 環境別設定
+ENV = os.getenv("ENVIRONMENT", "development")
+
+if ENV == "production":
+    # 本番環境設定
+    PERFORMANCE_CONFIG["max_concurrent"] = 50
+    API_CONFIG["rate_limit"]["requests_per_minute"] = 300
+    LOGGING_CONFIG["level"] = "WARNING"
+elif ENV == "staging":
+    # ステージング環境設定
+    PERFORMANCE_CONFIG["max_concurrent"] = 20
+    API_CONFIG["rate_limit"]["requests_per_minute"] = 120
+    LOGGING_CONFIG["level"] = "INFO"
+else:
+    # 開発環境設定（デフォルト）
+    pass
+
+# 外部API設定
+EXTERNAL_API_KEYS = {
+    "anthropic": os.getenv("ANTHROPIC_API_KEY", ""),
+    "openai": os.getenv("OPENAI_API_KEY", ""),
+    "google": os.getenv("GOOGLE_API_KEY", ""),
+    "huggingface": os.getenv("HUGGINGFACE_TOKEN", "")
+}
+
+# 外部API使用フラグ
+USE_EXTERNAL_APIS = os.getenv("USE_EXTERNAL_APIS", "False").lower() == "true"
+
+# API固有の設定
+API_SPECIFIC_CONFIG = {
+    "claude": {
+        "model": "claude-3-haiku-20240307",
+        "max_tokens": 200,
+        "temperature": 0,
+        "system_prompt": "あなたは日本語テキストの毒性を判定する専門家です。"
+    },
+    "openai": {
+        "model": "gpt-3.5-turbo",
+        "max_tokens": 200,
+        "temperature": 0,
+        "system_prompt": "You are an expert in detecting toxicity in Japanese text."
+    },
+    "google": {
+        "attributes": ["TOXICITY", "SEVERE_TOXICITY", "INSULT", "THREAT"],
+        "languages": ["ja"],
+        "score_threshold": 0.7
+    }
+}
+
+# 商用化プラン設定
+PRICING_PLANS = {
+    "free": {
+        "name": "Free",
+        "price": 0,
+        "requests_per_month": 1000,
+        "strategies": ["fast"],
+        "models": ["keyword"],
+        "rate_limit": 10,
+        "support": "community"
+    },
+    "basic": {
+        "name": "Basic",
+        "price": 2980,
+        "requests_per_month": 10000,
+        "strategies": ["fast", "cascade"],
+        "models": ["keyword", "toxic_bert"],
+        "rate_limit": 60,
+        "support": "email"
+    },
+    "premium": {
+        "name": "Premium",
+        "price": 9980,
+        "requests_per_month": 100000,
+        "strategies": ["fast", "cascade", "balanced"],
+        "models": ["keyword", "toxic_bert", "claude"],
+        "rate_limit": 300,
+        "support": "priority"
+    },
+    "enterprise": {
+        "name": "Enterprise",
+        "price": "custom",
+        "requests_per_month": "unlimited",
+        "strategies": ["all"],
+        "models": ["all"],
+        "rate_limit": "custom",
+        "support": "dedicated"
+    }
+}
+
+# モデル選択ロジック設定
+MODEL_SELECTION_RULES = {
+    "text_length_thresholds": {
+        "short": 50,   # 50文字以下
+        "medium": 200, # 200文字以下
+        "long": 500    # 500文字以上
+    },
+    "model_preferences": {
+        "short": ["keyword", "toxic_bert"],     # 短文は高速モデル
+        "medium": ["toxic_bert", "claude"],      # 中文はバランス型
+        "long": ["claude", "openai"],           # 長文は高精度モデル
+        "default": ["toxic_bert", "keyword"]     # デフォルト
+    },
+    "fallback_order": ["keyword", "toxic_bert", "mistral"]  # フォールバック順序
+}
+
+# ベンチマーク設定
+BENCHMARK_CONFIG = {
+    "test_suite": {
+        "basic": 20,      # 基本テストケース数
+        "advanced": 50,   # 詳細テストケース数
+        "stress": 100     # ストレステストケース数
+    },
+    "metrics": [
+        "accuracy",       # 精度
+        "precision",      # 適合率
+        "recall",         # 再現率
+        "f1_score",       # F1スコア
+        "response_time",  # レスポンス時間
+        "memory_usage"    # メモリ使用量
+    ],
+    "output_format": "json"  # 結果出力形式
+}
+
+
+# ユーティリティ関数
+def get_active_models() -> Dict[str, ModelConfig]:
+    """有効なモデル設定のみを取得"""
+    return {
+        name: config 
+        for name, config in MODEL_CONFIGS.items() 
+        if config.enabled
+    }
+
+
+def get_model_by_use_case(use_case: str) -> Optional[ModelConfig]:
+    """使用ケースに基づいてモデルを取得"""
+    for name, config in MODEL_CONFIGS.items():
+        if config.use_case == use_case and config.enabled:
+            return config
+    return None
+
+
+def update_model_weight(model_name: str, new_weight: float) -> None:
+    """モデルの重みを動的に更新"""
+    if model_name in MODEL_CONFIGS:
+        MODEL_CONFIGS[model_name].weight = new_weight
+        # 重みの正規化
+        normalize_weights()
+
+
+def normalize_weights() -> None:
+    """全モデルの重みを正規化（合計1.0になるよう調整）"""
+    active_models = get_active_models()
+    total_weight = sum(model.weight for model in active_models.values())
+    
+    if total_weight > 0:
+        for model in active_models.values():
+            model.weight = model.weight / total_weight
+
+
+# 設定検証
+def validate_config() -> bool:
+    """設定の妥当性を検証"""
+    try:
+        # モデル重みの合計チェック
+        active_models = get_active_models()
+        if not active_models:
+            raise ValueError("有効なモデルが1つもありません")
+        
+        # 外部API使用時の検証
+        if USE_EXTERNAL_APIS:
+            api_count = 0
+            if EXTERNAL_API_KEYS["anthropic"]:
+                print("✅ Claude API: 設定済み")
+                api_count += 1
+            if EXTERNAL_API_KEYS["openai"]:
+                print("✅ OpenAI API: 設定済み")
+                api_count += 1
+            if EXTERNAL_API_KEYS["google"]:
+                print("✅ Google API: 設定済み")
+                api_count += 1
+                
+            if api_count == 0:
+                print("⚠️  警告: USE_EXTERNAL_APISがTrueですが、APIキーが設定されていません")
+        
+        # 重みの正規化
+        normalize_weights()
+        
+        # API設定チェック
+        if API_CONFIG["rate_limit"]["requests_per_minute"] <= 0:
+            raise ValueError("APIレート制限が無効です")
+            
+        return True
+        
+    except Exception as e:
+        print(f"設定検証エラー: {str(e)}")
+        return False
+
+
+# クラスベースの設定アクセス（Release 4新機能）
+class Settings:
+    """アプリケーション設定クラス（シングルトン）"""
+    
+    # 環境設定
+    ENVIRONMENT: str = ENV
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    LOG_LEVEL: str = LOGGING_CONFIG["level"]
+    
+    # 外部API設定
+    USE_EXTERNAL_APIS: bool = USE_EXTERNAL_APIS
+    EXTERNAL_API_TIMEOUT: int = PERFORMANCE_CONFIG["external_api_timeout"]
+    
+    # APIキー
+    ANTHROPIC_API_KEY: Optional[str] = EXTERNAL_API_KEYS["anthropic"] or None
+    OPENAI_API_KEY: Optional[str] = EXTERNAL_API_KEYS["openai"] or None
+    GOOGLE_API_KEY: Optional[str] = EXTERNAL_API_KEYS["google"] or None
+    
+    # モデル設定
+    MODEL_CONFIGS = MODEL_CONFIGS
+    
+    # パフォーマンス閾値
+    PERFORMANCE_THRESHOLDS = {
+        "max_response_time": PERFORMANCE_CONFIG["max_response_time"],
+        "memory_limit": PERFORMANCE_CONFIG["memory_limit"],
+        "error_threshold": PERFORMANCE_CONFIG["error_threshold"],
+        "cache_size": 1000
+    }
+    
+    @classmethod
+    def validate(cls) -> None:
+        """設定の妥当性を検証"""
+        validate_config()
+
+
+# シングルトンインスタンス
+settings = Settings()
+
+
+# 初期化時の検証
+if __name__ == "__main__":
+    print("=== ToxiGuard API Release 4 設定確認 ===\n")
+    
+    # 設定検証
+    if validate_config():
+        print("✅ 設定検証: 成功")
+    else:
+        print("❌ 設定検証: 失敗")
+        
+    # アクティブモデル表示
+    print("\n有効なモデル:")
+    for name, config in get_active_models().items():
+        print(f"  - {name}: 重み={config.weight:.2f}, 用途={config.use_case}, コスト=${config.cost_per_request}")
+        
+    # 環境情報
+    print(f"\n環境: {ENV}")
+    print(f"デバッグ: {settings.DEBUG}")
+    print(f"外部API使用: {USE_EXTERNAL_APIS}")
+    print(f"最大同時処理: {PERFORMANCE_CONFIG['max_concurrent']}")
+    
+    # 商用プラン情報
+    print("\n商用プラン:")
+    for plan_id, plan in PRICING_PLANS.items():
+        print(f"  - {plan['name']}: ¥{plan['price']}/月" if plan['price'] != "custom" else f"  - {plan['name']}: カスタム価格")

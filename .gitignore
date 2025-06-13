@@ -15,23 +15,31 @@ ENV/
 *.swo
 *~
 .DS_Store
+*.code-workspace
+
+# macOS
+.DS_Store
 
 # 環境変数
 .env
-.env.local
+.env.*
 
 # ログとデータ
 *.log
 logs/
 data/
 *.db
+*.sqlite
 *.sqlite3
 
 # モデルファイル
-models/
+/models/
 *.pkl
 *.pth
 *.h5
+*.bin
+*.safetensors
+*.pt
 
 # Jupyter
 .ipynb_checkpoints/
