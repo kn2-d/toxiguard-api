@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToxiGuard API - 日本語毒性検知AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ナビゲーション -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🛡️ ToxiGuard API</h1>
+            </div>
+            <div class="nav-links">
+                <a href="#features">特徴</a>
+                <a href="#demo">デモ</a>
+                <a href="#pricing">料金</a>
+                <a href="/api-key" class="btn-primary">APIキー取得</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ヒーローセクション -->
+    <section class="hero">
+        <div class="hero-background"></div>
+        <div class="container">
+            <div class="hero-content">
+                <h2 class="hero-title">
+                    日本語の有害コンテンツを<br>
+                    <span class="gradient-text">AIが瞬時に検知</span>
+                </h2>
+                <p class="hero-subtitle">
+                    最新のAI技術で、誹謗中傷・ヘイトスピーチ・不適切な表現を<br>
+                    リアルタイムで検出。安全なオンライン環境を実現します。
+                </p>
+                <div class="hero-buttons">
+                    <a href="#demo" class="btn-primary btn-large">無料で試す</a>
+                    <a href="/api-key" class="btn-secondary btn-large">APIキー取得</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">99%+</div>
+                        <div class="stat-label">検知精度</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">0.01秒</div>
+                        <div class="stat-label">応答速度</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">6種類</div>
+                        <div class="stat-label">毒性カテゴリ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 特徴セクション -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">なぜToxiGuard APIを選ぶのか</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>超高速レスポンス</h3>
+                    <p>最速0.01秒の応答速度で、リアルタイムな毒性検知を実現</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>高精度AI</h3>
+                    <p>複数のAIモデルを組み合わせ、最大99%の検知精度を達成</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>日本語特化</h3>
+                    <p>日本語の文脈や慣用表現を理解し、誤検知を最小限に</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>詳細な分析</h3>
+                    <p>6つの毒性カテゴリで分類し、信頼度スコアも提供</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>簡単統合</h3>
+                    <p>RESTful APIで、あらゆるプラットフォームに簡単導入</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>柔軟な料金</h3>
+                    <p>無料プランから始められ、使用量に応じた公平な価格設定</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- デモセクション -->
+    <section id="demo" class="demo">
+        <div class="container">
+            <h2 class="section-title">実際に試してみる</h2>
+            <div class="demo-container">
+                <div class="demo-input">
+                    <textarea id="demo-text" placeholder="ここにテキストを入力してください..."></textarea>
+                    <button id="analyze-btn" class="btn-primary">分析する</button>
+                </div>
+                <div id="demo-result" class="demo-result" style="display: none;">
+                    <div class="result-header">
+                        <span id="result-label" class="result-label"></span>
+                        <span id="result-score" class="result-score"></span>
+                    </div>
+                    <div class="result-categories">
+                        <h4>検出されたカテゴリ：</h4>
+                        <div id="category-list"></div>
+                    </div>
+                    <div class="result-confidence">
+                        信頼度: <span id="confidence-score"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 料金セクション -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">シンプルな料金プラン</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">¥0<span>/月</span></div>
+                    <ul>
+                        <li>✓ 1,000リクエスト/月</li>
+                        <li>✓ キーワード検知</li>
+                        <li>✓ 基本サポート</li>
+                        <li>✓ 応答速度 0.01秒</li>
+                    </ul>
+                    <a href="#api" class="btn-secondary">無料で始める</a>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="badge">人気</div>
+                    <h3>Basic</h3>
+                    <div class="price">¥2,980<span>/月</span></div>
+                    <ul>
+                        <li>✓ 10,000リクエスト/月</li>
+                        <li>✓ AI検知モデル</li>
+                        <li>✓ 優先サポート</li>
+                        <li>✓ 応答速度 1秒以内</li>
+                        <li>✓ 精度95%</li>
+                    </ul>
+                    <a href="/api-key" class="btn-primary">申し込む</a>
+                </div>
+                <div class="pricing-card">
+                    <h3>Premium</h3>
+                    <div class="price">¥9,980<span>/月</span></div>
+                    <ul>
+                        <li>✓ 100,000リクエスト/月</li>
+                        <li>✓ 全AIモデル利用可</li>
+                        <li>✓ 専用サポート</li>
+                        <li>✓ 応答速度 3秒以内</li>
+                        <li>✓ 精度99%+</li>
+                        <li>✓ カスタマイズ可能</li>
+                    </ul>
+                    <a href="/api-key" class="btn-secondary">申し込む</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 ToxiGuard API. All rights reserved.</p>
+            <p>安全なインターネット環境の実現に向けて</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

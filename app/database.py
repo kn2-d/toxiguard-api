@@ -29,3 +29,14 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+# 既存のコードの最後に以下を追加
+
+def init_db():
+    """データベース初期化（テーブル作成）"""
+    # APIキーモデルをインポート（循環参照を避けるため関数内で）
+    from app.models.api_key import APIKey, APIUsage
+    
+    # 全テーブルを作成
+    Base.metadata.create_all(bind=engine)
+    print("データベーステーブルを作成しました")

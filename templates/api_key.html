@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APIキー発行 - ToxiGuard API</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .api-key-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b8b8b8;
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #8a2be2;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(138, 43, 226, 0.4);
+        }
+        
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(138, 43, 226, 0.1);
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .api-key-display {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .copy-btn {
+            padding: 8px 16px;
+            background: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #8a2be2;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="api-key-container">
+        <a href="/" class="back-link">← トップページに戻る</a>
+        
+        <h1>APIキー発行</h1>
+        <p style="color: #b8b8b8; margin-bottom: 30px;">
+            メールアドレスを入力して、無料のAPIキーを取得してください。
+            1日100回まで利用可能です。
+        </p>
+        
+        <form id="apiKeyForm">
+            <div class="form-group">
+                <label for="email" class="form-label">メールアドレス</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-input" 
+                    placeholder="your@email.com"
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="submit-btn">APIキーを発行</button>
+        </form>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="result-box" id="resultBox">
+            <h3>APIキーが発行されました！</h3>
+            <p style="color: #b8b8b8; font-size: 14px;">
+                このキーを安全に保管してください。再発行はできません。
+            </p>
+            <div class="api-key-display" id="apiKeyDisplay"></div>
+            <button class="copy-btn" onclick="copyApiKey()">コピー</button>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h4>使用方法：</h4>
+                <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; font-size: 12px;">
+curl -X POST "https://api.toxiguard.com/api/v1/analyze" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "検査したいテキスト"}'</pre>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('apiKeyForm');
+        const resultBox = document.getElementById('resultBox');
+        const errorMessage = document.getElementById('errorMessage');
+        const apiKeyDisplay = document.getElementById('apiKeyDisplay');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // エラーメッセージをクリア
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+            
+            const email = document.getElementById('email').value;
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 成功時
+                    apiKeyDisplay.textContent = data.api_key;
+                    resultBox.style.display = 'block';
+                    form.style.display = 'none';
+                } else {
+                    // エラー時
+                    errorMessage.textContent = data.detail || 'エラーが発生しました';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'ネットワークエラーが発生しました';
+                errorMessage.style.display = 'block';
+            }
+        });
+        
+        function copyApiKey() {
+            const apiKey = apiKeyDisplay.textContent;
+            navigator.clipboard.writeText(apiKey).then(() => {
+                const btn = event.target;
+                btn.textContent = 'コピーしました！';
+                setTimeout(() => {
+                    btn.textContent = 'コピー';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

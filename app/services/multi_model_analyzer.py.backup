@@ -1,7 +1,7 @@
 # app/services/multi_model_analyzer.py
 """
 Release 4 マルチモデル統合アナライザー
-KeywordAnalyzer + ToxicBertAnalyzer + ClaudeAnalyzer
+KeywordAnalyzer + ToxicBertAnalyzer + MistralAnalyzer (Phi-2) + ClaudeAnalyzer
 """
 import asyncio
 from asyncio import TimeoutError
@@ -24,6 +24,8 @@ sys.path.insert(0, project_root)
 try:
     from app.services.keyword_analyzer import KeywordAnalyzer
     from app.services.toxic_bert_analyzer import ToxicBertAnalyzer
+    from app.services.mistral_analyzer import MistralAnalyzer
+    from app.services.claude_analyzer import ClaudeAnalyzer  # Release 4で追加
     from app.config import settings, MODEL_CONFIGS
     from app.models.schemas import ToxicityCategory
 except ImportError:
@@ -31,6 +33,8 @@ except ImportError:
     try:
         from keyword_analyzer import KeywordAnalyzer
         from toxic_bert_analyzer import ToxicBertAnalyzer
+        from mistral_analyzer import MistralAnalyzer
+        from claude_analyzer import ClaudeAnalyzer  # Release 4で追加
         from config import settings, MODEL_CONFIGS
         from models.schemas import ToxicityCategory
     except ImportError as e:
@@ -79,23 +83,29 @@ class MultiModelAnalyzer:
             except Exception as e:
                 logger.error(f"ToxicBertAnalyzer初期化エラー: {e}")
         
-        # Claude アナライザー
+        # Mistralアナライザー（Phi-2）
+        if 'mistral' in MODEL_CONFIGS and MODEL_CONFIGS['mistral'].enabled:
+            try:
+                self.models['mistral'] = MistralAnalyzer()
+                logger.info("MistralAnalyzer初期化成功")
+            except Exception as e:
+                logger.error(f"MistralAnalyzer初期化エラー: {e}")
+        
+        # Claude アナライザー（Release 4で追加）
         if 'claude' in MODEL_CONFIGS and MODEL_CONFIGS['claude'].enabled:
             try:
-                from app.services.claude_analyzer import ClaudeAnalyzer
                 self.models['claude'] = ClaudeAnalyzer()
                 logger.info("ClaudeAnalyzer初期化成功")
             except Exception as e:
                 logger.error(f"ClaudeAnalyzer初期化エラー: {e}")
         
-        # OpenAI アナライザー
+        # OpenAI アナライザー（プレースホルダー）
         if 'openai' in MODEL_CONFIGS and MODEL_CONFIGS['openai'].enabled:
-            try:
-                from app.services.openai_analyzer import OpenAIAnalyzer
-                self.models['openai'] = OpenAIAnalyzer()
-                logger.info("OpenAIAnalyzer初期化成功")
-            except Exception as e:
-                logger.error(f"OpenAIAnalyzer初期化エラー: {e}")
+            logger.info("OpenAIAnalyzer: 未実装")
+        
+        # Google アナライザー（プレースホルダー）
+        if 'google' in MODEL_CONFIGS and MODEL_CONFIGS['google'].enabled:
+            logger.info("GoogleAnalyzer: 未実装")
         
         logger.info(f"初期化完了: {list(self.models.keys())}")
         
@@ -103,16 +113,20 @@ class MultiModelAnalyzer:
         self.model_weights = {
             'keyword': MODEL_CONFIGS['keyword'].weight if 'keyword' in MODEL_CONFIGS else 0.2,
             'toxic_bert': MODEL_CONFIGS['toxic_bert'].weight if 'toxic_bert' in MODEL_CONFIGS else 0.3,
+            'mistral': MODEL_CONFIGS['mistral'].weight if 'mistral' in MODEL_CONFIGS else 0.15,
             'claude': MODEL_CONFIGS['claude'].weight if 'claude' in MODEL_CONFIGS else 0.2,
             'openai': MODEL_CONFIGS['openai'].weight if 'openai' in MODEL_CONFIGS else 0.15,
+            'google': MODEL_CONFIGS['google'].weight if 'google' in MODEL_CONFIGS else 0.0,
         }
         
         # タイムアウト設定（秒）
         self.timeouts = {
             'keyword': MODEL_CONFIGS['keyword'].timeout if 'keyword' in MODEL_CONFIGS else 1,
             'toxic_bert': MODEL_CONFIGS['toxic_bert'].timeout if 'toxic_bert' in MODEL_CONFIGS else 3,
+            'mistral': MODEL_CONFIGS['mistral'].timeout if 'mistral' in MODEL_CONFIGS else 5,
             'claude': MODEL_CONFIGS['claude'].timeout if 'claude' in MODEL_CONFIGS else 10,
             'openai': MODEL_CONFIGS['openai'].timeout if 'openai' in MODEL_CONFIGS else 10,
+            'google': MODEL_CONFIGS['google'].timeout if 'google' in MODEL_CONFIGS else 5,
         }
     
     async def analyze_with_model(self, model_name: str, text: str) -> ModelResult:

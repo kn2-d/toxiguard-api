@@ -72,7 +72,7 @@ class AnalyzeResponseV2(BaseModel):
                 "confidence": 0.92,
                 "primary_category": "生命への脅威",
                 "strategy": "balanced",
-                "models_used": ["keyword", "toxic_bert"],
+                "models_used": ["keyword", "toxic_bert", "mistral"],
                 "total_time": 1.234,
                 "timestamp": "2024-03-14T10:30:00"
             }
@@ -275,7 +275,10 @@ async def get_models():
         elif name == "toxic_bert":
             model_info["type"] = "embedding_based"
             model_info["description"] = "文埋め込みベース高精度判定"
-                    
+        elif name == "mistral":
+            model_info["type"] = "llm_based"
+            model_info["description"] = "大規模言語モデル（Phi-2）"
+            
         models_info.append(model_info)
     
     return {

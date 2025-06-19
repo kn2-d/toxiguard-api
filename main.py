@@ -5,6 +5,10 @@ Version 3.0 - マルチモデル統合版
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+# main.pyの先頭部分に以下のインポートを追加
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
 from datetime import datetime
 import os
 from typing import Dict, Any
@@ -13,7 +17,12 @@ from dotenv import load_dotenv
 from app.routers import analyze
 from app.routers import analyze_v2
 import logging
-from app.routers import feedback  # 新規追加
+# 新規追加
+from app.routers import feedback
+# 既存のインポートの後に、以下を追加
+from app.routers import web
+from app.routers import api_key
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,6 +38,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# 静的ファイルの配信設定
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,10 +64,12 @@ class CustomJSONResponse(JSONResponse):
 app.default_response_class = CustomJSONResponse
 
 # ルーター登録
+app.include_router(web.router)
 app.include_router(analyze.router)      # Release 1 (v1)
 app.include_router(analyze_v2.router)   # Release 3 (v2)
 # 既存のルーター登録の後に追加 # 新規追加
 app.include_router(feedback.router)  
+app.include_router(api_key.router)
 
 @app.get("/")
 async def root():

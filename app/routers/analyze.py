@@ -2,7 +2,7 @@
 毒性分析APIエンドポイント
 URLとその処理を定義
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.models.schemas import (
     AnalyzeRequest, 
     AnalyzeResponse,
@@ -10,6 +10,10 @@ from app.models.schemas import (
 )
 from app.services.keyword_analyzer import KeywordAnalyzer
 import logging
+
+from app.middleware.auth import verify_api_key_optional
+from app.models.api_key import APIKey
+from typing import Optional
 
 # ログの設定
 logger = logging.getLogger(__name__)
@@ -21,7 +25,10 @@ router = APIRouter(prefix="/api/v1", tags=["analyze"])
 analyzer = KeywordAnalyzer()
 
 @router.post("/analyze", response_model=AnalyzeResponse)
-async def analyze_text(request: AnalyzeRequest):
+async def analyze_text(
+    request: AnalyzeRequest,
+    api_key: Optional[APIKey] = Depends(verify_api_key_optional)                   
+):
     """
     テキストの毒性を分析
     
