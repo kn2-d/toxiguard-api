@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: toxiguard-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main_simple:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: DATABASE_URL
+        fromDatabase:
+          name: toxiguard-db
+          property: connectionString
+      - key: USE_EXTERNAL_APIS
+        value: True
+      - key: ENABLE_TOXIC_BERT
+        value: False
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: LOG_LEVEL
+        value: DEBUG
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+databases:
+  - name: toxiguard-db
+    databaseName: toxiguard_db
+    user: toxiguard
+    plan: free
