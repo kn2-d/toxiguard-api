@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from app.models.schemas import ToxicityCategory
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,25 @@ class KeywordAnalyzer:
         
     def _load_keywords(self) -> Dict:
         """キーワードデータを読み込む"""
-        data_path = Path(__file__).parent.parent / "data" / "toxic_keywords.json"
+        # Docker環境とローカル環境の両方に対応
+        possible_paths = [
+            "/app/app/data/toxic_keywords.json",  # Docker環境
+            "/app/data/toxic_keywords.json",       # 別のDocker構成
+            Path(__file__).parent.parent / "data" / "toxic_keywords.json",  # ローカル環境
+        ]
+        
+        data_path = None
+        for path in possible_paths:
+            if os.path.exists(str(path)):
+                data_path = path
+                logger.info(f"Found toxic_keywords.json at: {path}")
+                break
+        
+        if data_path is None:
+            raise FileNotFoundError(
+                f"toxic_keywords.json not found. Searched paths: {possible_paths}"
+            )
+        
         with open(data_path, "r", encoding="utf-8") as f:
             return json.load(f)
     
