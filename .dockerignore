@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+*.db
+*.sqlite
+.env
+.env.*
+requirements_full.txt
+requirements.txt.backup
+models/  # AIモデルファイル（大きいため）
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test_*.py
+tests/

@@ -1,24 +1,23 @@
 services:
   - type: web
     name: toxiguard-api
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main_simple:app --host 0.0.0.0 --port $PORT
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.8
+      - key: PORT
+        value: 10000
       - key: DATABASE_URL
         fromDatabase:
           name: toxiguard-db
           property: connectionString
       - key: USE_EXTERNAL_APIS
-        value: True
+        value: False  # 最初はFalseで起動テスト
       - key: ENABLE_TOXIC_BERT
         value: False
-      - key: PYTHONPATH
-        value: /opt/render/project/src
       - key: LOG_LEVEL
-        value: DEBUG
+        value: INFO
+      - key: DEV_MODE
+        value: True
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENAI_API_KEY
